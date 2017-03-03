@@ -49,6 +49,8 @@ else
 	echo "Thread Sanitizer build directory already exists."
 fi
 
+echo
+
 if [ ! -d "./build/asan" ]; then
 	echo "Creating Address Sanitizer build directory: ./build/asan"
 	mkdir ./build/asan
@@ -59,6 +61,8 @@ else
 	echo "Address Sanitizer build directory already exists."
 fi
 
+echo
+
 if [ ! -d "./build/msan" ]; then
 	echo "Creating Memory Sanitizer build directory: ./build/msan"
 	mkdir ./build/msan
@@ -68,6 +72,8 @@ if [ ! -d "./build/msan" ]; then
 else
 	echo "Memory Sanitizer build directory already exists."
 fi
+
+echo
 
 if [ ! -d "./build/usan" ]; then
 	echo "Creating Undefined Sanitizer build directory: ./build/usan"
