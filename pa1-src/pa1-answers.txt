@@ -1,0 +1,27 @@
+Q1) What common parallelism bug does this code appear to exhibit?
+
+A:
+The common parallelism bug which appears is no synhcronized access to shared
+variables i.e no mutual exclusion. The code shared by all the threads are
+worker_fun. Which in turn has access to shared/global variables.
+/*
+size_t num_threads, data_size;
+
+volatile size_t round_num;
+
+vector<uint32_t> data;
+*/
+
+Out these global variables data_size is read only and num_threads is not accessed.
+Vector data and variable round_num is accessed in read and write mode. These
+variables are accessed without synchronization between threads which gives
+possiblilty for race condition.
+
+
+2. Enter into the build/debug build directory and compile the executables.
+Run the program pa1-dummy several times.
+
+Q2) Describe at least two different observed behaviors from the program.
+Does the bug identified in Question 1 explain the observed behavior?
+Explain your answer.
+
