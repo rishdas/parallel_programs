@@ -25,3 +25,133 @@ Q2) Describe at least two different observed behaviors from the program.
 Does the bug identified in Question 1 explain the observed behavior?
 Explain your answer.
 
+
+
+The two observed behaviours are :
+1. Infinite loop due to unsynchronized access to variable round_num.
+2. In correct Old data hash picked up by a thread from data vector
+   again due unsynchronized access to data vector which is shared among threads
+
+Yes the bug in Question 1 explains the behaviour. A little more detailed analysis
+on the behaviour.
+
+1.
+This infinite loop occurs because of the type of variable round_num which is
+size_t which is a unsigned integer typedefed. As it can be seen that the 
+round_num is decremented at the end of each iteration of the outer while loop.
+If we add a print statement to print the value of round_num along with old and new
+hash value we can see that it starts from num_rounds which in my case was 64 and
+goes to zero and beyond which is ffffffffffffffff ...... because 0-- of an unsigned
+integer is ffffffffffffffff which is greater than zero hence the loop continues.
+Hence at the time of condition checking it is zero as any other thread may have
+decremented the value from zero to all ffffffffffffffff which is a wrap around
+hence the infinte loop.
+[Thread 1]: Old data hash: 0xfb264c24round_num: 0
+[Thread 3]: Old data hash: 0xca81cbe0round_num: 0
+[Thread 3]: New data hash: 0x3be9a4a6round_num: 0
+
+[Thread 1]: New data hash: 0xca81cbe0round_num: 0
+
+[Thread 1]: Old data hash: 0x3be9a4a6round_num: fffffffffffffffe
+[Thread 1]: New data hash: 0xc9da84fbround_num: fffffffffffffffe
+
+[Thread 3]: Old data hash: 0xc9da84fbround_num: fffffffffffffffd
+[Thread 3]: New data hash: 0x50efe25dround_num: fffffffffffffffd
+
+[Thread 1]: Old data hash: 0x50efe25dround_num: fffffffffffffffc
+[Thread 1]: New data hash: 0x31050194round_num: fffffffffffffffc
+
+[Thread 3]: Old data hash: 0x31050194round_num: fffffffffffffffb
+[Thread 3]: New data hash: 0xe3796f19round_num: fffffffffffffffb
+
+
+2. Desired behaviour:
+
+[Thread 2]: Old data hash: 0x54443e18
+[Thread 2]: New data hash: 0xb6f75de5 -- Value A
+
+[Thread 3]: Old data hash: 0xb6f75de5 -- Value B
+[Thread 3]: New data hash: 0xd31cd8c8
+
+Produced Behaviour in some cases:
+
+[Thread 1]: New data hash: 0xe654929b
+
+[Thread 3]: Old data hash: 0x9103486e
+[Thread 3]: New data hash: 0x80a11d8b
+
+This could also be due to interleaving IO statements but never the less the reason
+is unsyncronized access to shared variable data. Were the there could be
+interleaving double writes before read which could give rise to such diffrent
+old and new values between rounds.
+
+
+3. Read the documentation for Clang’s Thread Sanitizer:
+     https://clang.llvm.org/docs/ThreadSanitizer.html
+Q3) What common parallelism issue(s) does the Thread Sanitizer help to detect?
+Q4) What is the typical slowdown of an application when it is compiled with the
+Thread Sanitizer?
+Q5) What command line option needs to be passed to Clang to compile an executable
+with the Thread Sanitizer?
+Q6) What command line option is implied by the use of the Thread Sanitizer?
+
+A3)
+Thread Sanitizer helps you detect data races by giving warnings such as these :
+WARNING: ThreadSanitizer: data race (pid=6785)
+
+A4) The typical slowdown of an application when compiled with thread sanitizer 
+is 5x-15x.
+
+A5) -fsanitize=thread is the command line option passed to clang to compile an
+executable. Additiional parameters like -O1 -g are also passed for perfomance and
+output readability purposes.
+
+A6) As non-position independant executables are not supported by the thread
+sanitizer therefore by adding -fsanitize=thread flag implictly adds -fPIE if
+-fPIC has not been mentioned as a flag and -pie flag if linking an executable.
+
+
+
+
+4. Switch to the build/tsan directory, compile the executables, and run pa1-dummy
+several times.
+Q7) What bug(s) was detected, and what line(s) of code does the tool blame for
+the bug(s)?
+
+Error type 1:
+WARNING: ThreadSanitizer: data race (pid=6785)
+  Read of size 4 at 0x7f3168b7ef60 by thread T2:
+ #3 worker_fun(unsigned long) /home/sirdas/parallel_programs/pa1-src/pa1.cpp:109 (pa1-dummy+0x0000004ad5a0)
+
+Line no 109: 	tout(tid) << "Entering thread." << endl;
+basic_ostream<char>& type object returned by tout is the reason for data race.
+
+
+Error Type 2:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=6785)
+  Read of size 8 at 0x000001544360 by thread T2:
+  #0 worker_fun(unsigned long) /home/sirdas/parallel_programs/pa1-src/pa1.cpp:116 (pa1-dummy+0x0000004ad68a)
+
+Line no 116: while (round_num > 0) {
+This is because of unsyncronized access to global variable round_num.
+
+
+Error Type 3:
+
+WARNING: ThreadSanitizer: data race (pid=6785)
+  Read of size 4 at 0x7d900000fffc by thread T2:
+    #0 worker_fun(unsigned long) /home/sirdas/parallel_programs/pa1-src/pa1.cpp:125 (pa1-dummy+0x0000004ad75b)
+
+    
+Line no 125: update_hash_state(old_state, data[index]);
+
+Again unsynchronized access to data which is a global structure.
+
+
+
+
+
+
+
