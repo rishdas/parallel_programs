@@ -14,41 +14,52 @@
 #include <cstddef>
 #include <mutex>
 
-struct DummyLock {
-	DummyLock(size_t num_threads);
+extern thread_local size_t thread_id;
 
-	void lock(void);
-	void unlock(void);
+struct DummyLock {
+    DummyLock(size_t num_threads);
+
+    void lock(void);
+    void unlock(void);
 };
 
 class StdWrapperLock {
-	std::mutex inner_lock;
+    std::mutex inner_lock;
 
-	public:
-	StdWrapperLock(size_t num_threads);
+public:
+    StdWrapperLock(size_t num_threads);
 
-	void lock(void);
-	void unlock(void);
+    void lock(void);
+    void unlock(void);
 };
 
 class PetersonsFilterLock {
-	// FIXME: Add member variables here.
+private:
+    size_t *level;
+    size_t *victim;
+    size_t num_threads;
+    
+public:
+    PetersonsFilterLock(size_t num_threads);
 
-	public:
-	PetersonsFilterLock(size_t num_threads);
-
-	void lock(void);
-	void unlock(void);
+    void lock(void);
+    void unlock(void);
+    bool sameOrHigher(size_t, size_t);
 };
 
 class BakeryLock {
-	// FIXME: Add member variables here.
+private:
+    bool   *flag;
+    size_t *label;
+    size_t num_threads;
 
-	public:
-	BakeryLock(size_t num_threads);
+public:
+    BakeryLock(size_t num_threads);
 
-	void lock(void);
-	void unlock(void);
+    void   lock(void);
+    void   unlock(void);
+    size_t maxLabel();
+    bool   isLabelLessThan(size_t, size_t);
 };
 
 #endif

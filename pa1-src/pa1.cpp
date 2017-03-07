@@ -72,8 +72,20 @@ volatile size_t round_num;
 vector<uint32_t> data;
 
 /*
+ * Thread local variables
+ */
+
+thread_local size_t thread_id;
+
+/*
  * Functions
  */
+
+/*
+ * Prep the lock
+ */
+
+lock_t *me_lock;
 
 int main(int argc, char** argv) {
 	if (argc == 2 and strncmp("-h", argv[1], 2) == 0) {
@@ -92,6 +104,10 @@ int main(int argc, char** argv) {
 	vector<thread> thread_v;
 	thread_v.reserve(num_threads);
 
+	//Allocate lock
+
+	me_lock = new lock_t(num_threads);
+
 	// Spawn our threads.
 	for (size_t thread_id = num_threads; thread_id-- > 0;) {
 		thread_v.emplace_back(worker_fun, thread_id);
@@ -106,35 +122,48 @@ int main(int argc, char** argv) {
 }
 
 void worker_fun(size_t tid) {
+        me_lock->lock();
 	tout(tid) << "Entering thread." << endl;
+	me_lock->unlock();
+	
+
+	thread_id = tid;
 
 	// Initialize the pseudo-random number generator.
 	random_device rd;
 	default_random_engine entropy_engine(rd());
 	uniform_int_distribution<uint32_t> ui_dist(0, numeric_limits<uint32_t>::max());
-
-	while (round_num > 0) {
-		// Initialize the 'hash' states.
-		uint32_t old_state = HASH_START_STATE,
-		         new_state = HASH_START_STATE;
-
-		// Generate new data and hash as we go
+	
+	while (true) {
+	    // Initialize the 'hash' states.
+	    uint32_t old_state = HASH_START_STATE,
+		new_state = HASH_START_STATE;
+	    // Generate new data and hash as we go
+	    me_lock->lock();
+	    if (round_num > 0) {
 		for (size_t index = data_size; index-- > 0;) {
-			uint32_t new_val = ui_dist(entropy_engine);
+		    uint32_t new_val = ui_dist(entropy_engine);
+			
+		    update_hash_state(old_state, data[index]);
+		    update_hash_state(new_state, new_val);
 
-			update_hash_state(old_state, data[index]);
-			update_hash_state(new_state, new_val);
-
-			data[index] = new_val;
+		    data[index] = new_val;			
 		}
 
 		// Print result of hasing the old and new data.
 		tout(tid) << "Old data hash: 0x" << hex << setfill('0') << setw(8) << old_state << endl;
-		tout(tid) << "New data hash: 0x" << hex << setfill('0') << setw(8) << new_state << endl << endl;
+		tout(tid) << "New data hash: 0x" << hex << setfill('0') << setw(8) << new_state << endl << endl;		
 
+		
 		// Decrement the round count.
 		--round_num;
+	    } else {
+		me_lock->unlock();
+		break;
+	    }
+	    me_lock->unlock();
 	}
+
 }
 
 void update_hash_state(uint32_t& state, uint32_t data_word) {
