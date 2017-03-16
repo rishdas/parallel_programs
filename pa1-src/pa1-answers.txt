@@ -1,9 +1,8 @@
 Q1) What common parallelism bug does this code appear to exhibit?
 
-A:
-The common parallelism bug which appears is no synhcronized access to shared
-variables i.e no mutual exclusion. The code shared by all the threads are
-worker_fun. Which in turn has access to shared/global variables.
+A: The common parallelism bug which  appears is no synhcronized access to shared
+variables  i.e no  mutual exclusion.   The code  shared by  all the  threads are
+worker_fun.  Which  in turn  has access to  shared/global variables.
 /*
 size_t num_threads, data_size;
 
@@ -12,40 +11,40 @@ volatile size_t round_num;
 vector<uint32_t> data;
 */
 
-Out these global variables data_size is read only and num_threads is not accessed.
-Vector data and variable round_num is accessed in read and write mode. These
-variables are accessed without synchronization between threads which gives
-possiblilty for race condition.
+Out  these global  variables  data_size  is read  only  and  num_threads is  not
+accessed.  Vector  data and  variable round_num  is accessed  in read  and write
+mode. These variables are accessed without synchronization between threads which
+gives possiblilty for race condition.
 
 
-2. Enter into the build/debug build directory and compile the executables.
-Run the program pa1-dummy several times.
+2. Enter into the build/debug build  directory and compile the executables.  Run
+the program pa1-dummy several times.
 
-Q2) Describe at least two different observed behaviors from the program.
-Does the bug identified in Question 1 explain the observed behavior?
-Explain your answer.
+Q2) Describe at  least two different observed behaviors from  the program.  Does
+the bug  identified in Question 1  explain the observed behavior?   Explain your
+answer.
 
 
 
-The two observed behaviours are :
-1. Infinite loop due to unsynchronized access to variable round_num.
-2. In correct Old data hash picked up by a thread from data vector
-   again due unsynchronized access to data vector which is shared among threads
+The two observed behaviours are :  1. Infinite loop due to unsynchronized access
+to variable round_num.  2.  In correct Old  data hash picked up by a thread from
+data vector again due unsynchronized access to data vector which is shared among
+threads
 
-Yes the bug in Question 1 explains the behaviour. A little more detailed analysis
-on the behaviour.
+Yes  the bug  in Question  1  explains the  behaviour.  A  little more  detailed
+analysis on the behaviour.
 
-1.
-This infinite loop occurs because of the type of variable round_num which is
-size_t which is a unsigned integer typedefed. As it can be seen that the 
-round_num is decremented at the end of each iteration of the outer while loop.
-If we add a print statement to print the value of round_num along with old and new
-hash value we can see that it starts from num_rounds which in my case was 64 and
-goes to zero and beyond which is ffffffffffffffff ...... because 0-- of an unsigned
-integer is ffffffffffffffff which is greater than zero hence the loop continues.
-Hence at the time of condition checking it is zero as any other thread may have
-decremented the value from zero to all ffffffffffffffff which is a wrap around
-hence the infinte loop.
+1.  This infinite loop occurs because of the type of variable round_num which is
+size_t  which is  a unsigned  integer  typedefed. As  it  can be  seen that  the
+round_num is decremented at  the end of each iteration of  the outer while loop.
+If we add a  print statement to print the value of round_num  along with old and
+new hash value we can see that it starts from num_rounds which in my case was 64
+and goes to zero and beyond which  is ffffffffffffffff ......  because 0-- of an
+unsigned integer is  ffffffffffffffff which is greater than zero  hence the loop
+continues.  Hence  at the  time of condition  checking it is  zero as  any other
+thread may have decremented the value from zero to all ffffffffffffffff which is
+a  wrap   around  hence  the   infinte  loop.
+
 [Thread 1]: Old data hash: 0xfb264c24round_num: 0
 [Thread 3]: Old data hash: 0xca81cbe0round_num: 0
 [Thread 3]: New data hash: 0x3be9a4a6round_num: 0
@@ -80,43 +79,40 @@ Produced Behaviour in some cases:
 [Thread 3]: Old data hash: 0x9103486e
 [Thread 3]: New data hash: 0x80a11d8b
 
-This could also be due to interleaving IO statements but never the less the reason
-is unsyncronized access to shared variable data. Were the there could be
-interleaving double writes before read which could give rise to such diffrent
+This could  also be  due to interleaving  IO statements but  never the  less the
+reason is unsyncronized access to shared  variable data. Were the there could be
+interleaving double  writes before read which  could give rise to  such diffrent
 old and new values between rounds.
 
 
-3. Read the documentation for Clang’s Thread Sanitizer:
-     https://clang.llvm.org/docs/ThreadSanitizer.html
-Q3) What common parallelism issue(s) does the Thread Sanitizer help to detect?
-Q4) What is the typical slowdown of an application when it is compiled with the
-Thread Sanitizer?
-Q5) What command line option needs to be passed to Clang to compile an executable
-with the Thread Sanitizer?
-Q6) What command line option is implied by the use of the Thread Sanitizer?
+3.     Read     the    documentation     for    Clang’s     Thread    Sanitizer:
+     https://clang.llvm.org/docs/ThreadSanitizer.html     Q3)    What     common
+     parallelism issue(s) does the Thread Sanitizer help to detect?  Q4) What is
+     the typical slowdown of an application  when it is compiled with the Thread
+     Sanitizer?  Q5)  What command line  option needs to  be passed to  Clang to
+     compile an  executable with  the Thread Sanitizer?   Q6) What  command line
+     option is implied by the use of the Thread Sanitizer?
 
-A3)
-Thread Sanitizer helps you detect data races by giving warnings such as these :
-WARNING: ThreadSanitizer: data race (pid=6785)
+A3) Thread  Sanitizer helps  you detect  data races by  giving warnings  such as
+these : WARNING: ThreadSanitizer: data race (pid=6785)
 
-A4) The typical slowdown of an application when compiled with thread sanitizer 
+A4) The typical  slowdown of an application when compiled  with thread sanitizer
 is 5x-15x.
 
-A5) -fsanitize=thread is the command line option passed to clang to compile an
-executable. Additiional parameters like -O1 -g are also passed for perfomance and
-output readability purposes.
+A5) -fsanitize=thread is  the command line option passed to  clang to compile an
+executable. Additiional  parameters like -O1  -g are also passed  for perfomance
+and output readability purposes.
 
-A6) As non-position independant executables are not supported by the thread
-sanitizer therefore by adding -fsanitize=thread flag implictly adds -fPIE if
+A6)  As non-position  independant executables  are not  supported by  the thread
+sanitizer therefore  by adding  -fsanitize=thread flag  implictly adds  -fPIE if
 -fPIC has not been mentioned as a flag and -pie flag if linking an executable.
 
 
 
 
-4. Switch to the build/tsan directory, compile the executables, and run pa1-dummy
-several times.
-Q7) What bug(s) was detected, and what line(s) of code does the tool blame for
-the bug(s)?
+4.   Switch  to the  build/tsan  directory,  compile  the executables,  and  run
+pa1-dummy several times.  Q7) What bug(s) was detected, and what line(s) of code
+does the tool blame for the bug(s)?
 
 Error type 1:
 WARNING: ThreadSanitizer: data race (pid=6785)
@@ -150,8 +146,126 @@ Line no 125: update_hash_state(old_state, data[index]);
 Again unsynchronized access to data which is a global structure.
 
 
+5. Open  the files locks.cpp and  locks.h. Several locations in  these files are
+marked with FIXME com- ments. Implement  Peterson’s Filter Lock (pg. 28) and the
+Bakery Lock (pg. 30) by filling these locations in with function definitions and
+class members.
+
+
+A. Done. Please Refer Source code.
+
+
+6.  Notice that all of our locks  conform to the same interface. This means that
+we  can  test multiple  lock  types  using the  same  source  program simply  by
+re-defining lock t, which  is exactly what pa1.cpp does. Use the  type lock t to
+enforce mutual exclusion in pa1.cpp.  The pa1-dummy program should still exhibit
+any previously  present bugs, but the  other executables should now  be properly
+synchronized.
+Q8) Could the critical sections you identified be made larger? If so, what would
+be  the advantages  and  disadvantages?
+Q9) Could  the critical sections  you identified be  made smaller?  If  so, what
+would be the advantages and disadvantages?
 
 
 
+A8) The  changes I have  made is the  largest possible critical  section without
+altering behaviour of  the program. Encompassing the whole of  worker_fun as one
+critical section would reomve all the direct worker_fun thread warnings but this
+would alter the behaviour of the program  as in round_num is a data structure to
+be  shared accross  threads and  thus  rounds are  expected to  be shared  among
+threads. If we place the whole function body in critical section once one thread
+takes control  of critical  section it will  run all the  rounds and  exit after
+which other  threads even  though enter  critical section  but dont  perform any
+computation task which kind of alters  the program behaviour.  The advantages of
+having a  larger critical  section is  low overhead  involved in  contention for
+accquiring  lock.  The  disadvantages of  having  a larger  critical section  is
+lesser fraction of  code being paralliezed hence low  speedup according Amdahl's
+Law.
+
+A9) Yes the critical sections can be  smaller than the one I have already coded.
+The critical  section could  be specicially  around access  to each  shared data
+structure like tout,  data, round_num. but have too many  small critical section
+comes with  contention overhead.   The advantages of  small critical  section as
+mentioned earlier  is more  parallelism hence  theoritcal increased  speedup via
+Amdahl's Law if thread contention  overhead is negligible.  The disadvantages of
+small critical section is more overhead for thread contention.
 
 
+7. Enter the build/tsan directory, compile  the executables, and test your locks
+to ensure that the thread sanitizer no longer detects any errors.
+
+
+./pa1-std 4 100 2048
+
+Runs properly to completion with each thread doing some computation
+This establishes that the placement of lock and unlock statement in pa1.cpp is
+correct.
+
+For petersons and bakery the thread analyzer does show warnings as the lock/unlock
+procedure of both are not atmoic hence dont conform with the thread sanitizer.
+Below I descibe the warnings and justification as to why they can ignored.
+
+./pa1-petersons 4 100 2048
+
+The thread sanitizer in this case reports 9 warnings.
+=========
+ThreadSanitizer: reported 9 warnings
+=========
+
+
+Warning 1: void PetersonsFilterLock::lock(void)
+
+locks.cpp: Line No 60: level[me] = i;
+
+This is because it concurrent access is on independant data fields as this line
+accesses level[me] were me is thread_id which is diffrent for each thread.
+Hence this warning can be ignored.
+
+Warning 2: void PetersonsFilterLock::lock(void)
+
+locks.cpp: Line No 61: victim[i] = me;
+
+Here victim is again a shared data structure and i denotes the level the current
+thread is trying to enter. Even though all threads may try to simultaneously set
+the values in victim only one of them is able to set a value and then enter the
+while loop(busy wait). Others who set previous values dont enter the while loop
+instead go to the next level by undergoing another iteration of for.
+
+while (sameOrHigher(me, i) && victim[i] == me);
+
+Hence concurrent access to victim is sort necessary and accepted behaviour for
+this algorthim.
+
+Warning 3: bool PetersonsFilterLock::sameOrHigher(size_t me, size_t i)
+
+locks.cpp: Line No 73: if (k != me && level[k] >= i) {
+
+Here victim is again access to shared data structure level as was in Warning 1 but
+here there is overlap in access. But this overlap in access is again a necessary
+and accepted behaviour i.e even if the result of this loop is erroneos true.
+The lock procedure has another check on it which is victim[i] == me which allows
+only one thread to be consumed per level. Hence again this warning can be ignored.
+
+Warning 4: void worker_fun(size_t tid)
+
+pa1.cpp: Line no 126: 	tout(tid) << "Entering thread." << endl;
+
+This warning is direct result of the previous 3 warnings as we assume are lock
+procedure works fine with warnings so we can assume this works fine as well.
+The explanation for this warning without locks is in A7
+
+Warning 5: void worker_fun(size_t tid)
+
+pa1.cpp: Line no 143: 	if (round_num > 0) {
+
+This warning is direct result of the previous 3 warnings as we assume are lock
+procedure works fine with warnings so we can assume this works fine as well.
+The explanation for this warning without locks is in A7
+
+Warning 6: void worker_fun(size_t tid)
+
+pa1.cpp: Line no 147: 	update_hash_state(old_state, data[index]);
+
+This warning is direct result of the previous 3 warnings as we assume are lock
+procedure works fine with warnings so we can assume this works fine as well.
+The explanation for this warning without locks is in A7
