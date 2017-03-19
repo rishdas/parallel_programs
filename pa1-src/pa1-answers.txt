@@ -269,3 +269,94 @@ pa1.cpp: Line no 147: 	update_hash_state(old_state, data[index]);
 This warning is direct result of the previous 3 warnings as we assume are lock
 procedure works fine with warnings so we can assume this works fine as well.
 The explanation for this warning without locks is in A7
+
+
+./pa1-bakery 4 100 2048
+
+Warning 1: size_t BakeryLock::maxLabel()
+
+locks.cpp: Line No 111: if (label[i] > max) {
+
+
+This statement can be executed concurrently by all the threads thus resulting
+in the same max value for more than one thread. But this tie is broken by call
+to procedure isLabelLessThan which performs additional check of k<i in case the
+label is found to be the same using that as tie breaker. This is accepted behaviour
+in the algorithm hence the warning can be ignored.
+
+
+Warning 2: void worker_fun(size_t tid)
+
+pa1.cpp: Line no 126: 	tout(tid) << "Entering thread." << endl;
+
+This warning is direct result of the previous 3 warnings as we assume are lock
+procedure works fine with warnings so we can assume this works fine as well.
+The explanation for this warning without locks is in A7
+
+Warning 3: void BakeryLock::unlock(void)
+
+
+locks.cpp: Line No 105: flag[thread_id] = false;
+
+
+This line is flagged as warning because it has concurrent access to shared data
+structure flag[]. This access is on individual elements of the array based on
+thread id which is mutually exclusive. Hence this warning can be ignored.
+
+
+Warning 4: void BakeryLock::lock(void)
+
+locks.cpp: Line No 96:  flag[i] = true;
+
+Again this is similar to Warning 3.
+This line is flagged as warning because it has concurrent access to shared data
+structure flag[]. This access is on individual elements of the array based on
+thread id which is mutually exclusive. Hence this warning can be ignored.
+
+
+Warning 5: void BakeryLock::lock(void)
+
+locks.cpp: Line No 97:  label[i] = maxLabel() + 1;
+
+Again this is similar to Warning 3 and 4 as each thread accesses label array
+based on thread id whcih is mutually exclusive.
+
+
+Warning 6: void worker_fun(size_t tid)
+
+pa1.cpp: Line no 143: 	if (round_num > 0) {
+
+This warning is direct result of the previous 3 warnings as we assume are lock
+procedure works fine with warnings so we can assume this works fine as well.
+The explanation for this warning without locks is in A7
+
+Warning 7: void worker_fun(size_t tid)
+
+pa1.cpp: Line no 147: 	update_hash_state(old_state, data[index]);
+
+This warning is direct result of the previous 3 warnings as we assume are lock
+procedure works fine with warnings so we can assume this works fine as well.
+The explanation for this warning without locks is in A7
+
+
+
+8.   Enter the  build/release directory  and compile  the executables.
+Next,  benchmark  pa1-petersons,  pa1-bakery,  and  pa1-std  with  the
+following parameters:
+(a) A fixed round  count of 100
+(b)  Data sizes 210  (1024), 218  (262144), and  220 (1048576)
+(c) Number  of threads ranging from 2 to 128, by powers of two 2
+  
+When benchmarking, run each program 6  times, drop the first time, and
+average the remaining times. Once  you have collected your data create
+three line graphs, one for each data size, comparing the total elapsed
+time versus the number of threads.
+
+Q10) On average, which lock  performed best? Were there any situations
+where it was not the best lock?
+
+Q11) Which lock had better  performance: Peterson’s Filter Lock or the
+Bakery Lock?
+
+Q12) Was the  relative performance of the locks the  same for all data
+sizes? Explain why or why not.
