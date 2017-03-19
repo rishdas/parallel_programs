@@ -429,7 +429,8 @@ pa1-std_1024.png
 pa1-std_1048576.png
 pa1-std_262144.png
 pa1-bakery_1024.png
-TODO
+pa1-bakery_1048576.png
+pa1-bakery_262144.png
 //Data corresponding to the line graphs
 //pa1-std
 1024 2 1.6
@@ -489,7 +490,14 @@ TODO
 262144 16 2201.0
 262144 32 4365.6
 262144 64 8755.6
-TODO
+262144 128 18605.0
+1048576 2 1151.2
+1048576 4 2201.8
+1048576 8 4446.2
+1048576 16 9634.6
+1048576 32 17447.0
+1048576 64 34958.2
+1048576 128 70701.2
 
 ==================================================
 
@@ -515,7 +523,7 @@ For pa1-petersons
 1048576           2             1100.6
 For pa1-bakery
 <datasize> <no of threads> <time in seconds>
-1048576           2             TODO
+1048576           2             1151.2
 
 
 As you can see for these parameters bakery and petersons performed better than
@@ -528,8 +536,18 @@ The relative performance of bakery and petersons differs with data size.
 For:
 1024 : Petersons is clear winner as the no of threads increase 
 262144 : Bakery and petersons more or less deliver the same perfomance.
-1048576 : TODO
+1048576 :  Here again Bakery  and petersons  more or less  deliver the
+same perfomance.
 
 A13)
 
+No the  the relative  performance of  the locks is  not the  same. The
+standard  lock  is faster  than  petersons  and  bakery for  all  data
+sizes. Bakery or petersons on the other  hand is more or less the same
+for 262144 and 1048576 data size.  But for data size 1024 petersons is
+relatively  better  than bakery.  The  reason  standard lock  performs
+better  is  its  a  mutex   lock  internally  which  implements  loack
+atomically  and does  not have  to go  through a  loop of  making each
+thread wait at some level like petersons  or a loop of finding the max
+level like bakery does.
 
