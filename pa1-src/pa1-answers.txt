@@ -344,7 +344,7 @@ The explanation for this warning without locks is in A7
 Next,  benchmark  pa1-petersons,  pa1-bakery,  and  pa1-std  with  the
 following parameters:
 (a) A fixed round  count of 100
-(b)  Data sizes 210  (1024), 218  (262144), and  220 (1048576)
+(b)  Data sizes 2^10  (1024), 2^18  (262144), and  2^20 (1048576)
 (c) Number  of threads ranging from 2 to 128, by powers of two 2
   
 When benchmarking, run each program 6  times, drop the first time, and
@@ -360,3 +360,176 @@ Bakery Lock?
 
 Q12) Was the  relative performance of the locks the  same for all data
 sizes? Explain why or why not.
+
+
+Note: I  faced problems  with pa1-bakery  binary generated  in release
+folder.  The  bakery binary  halted midway and  hence was  stuck. This
+behaviour was not seen in  either build/tsan or build/debug. Hence all
+my  results   are  generated  for  build/debug   binaries  instead  of
+build/release.
+
+I have used a crude Python Script to collect the benchmark results and
+used https://plot.ly to build line graphs. The script is written below
+and its also present in my source ditectory named pa1-benchmark.py. To
+run it it needs to be placed in build/debug directory.
+
+==========================================
+from subprocess import Popen, PIPE
+import os
+
+sum_e = 0
+num_of_rounds = '100'
+num_of_threads = 2
+data_sizes = ['1024', '262144', '1048576']
+binary_l = ['./pa1-std', './pa1-petersons', './pa1-bakery']
+ctr = 0
+for binary in binary_l:
+    for data_size in data_sizes:
+        while num_of_threads <= 128:
+            for num in range(0,6):
+                p = Popen(['time', binary, str(num_of_threads), num_of_rounds, data_size], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                out, err = p.communicate()
+                exitcode = p.returncode
+                if ctr == 0:
+                    ctr = ctr + 1
+                    continue
+                #print err + " "
+                time_e = 3600*float(err.split()[2].split(':')[0]) + 60*float(err.split()[2].split(':')[1].split('e')[0].split('.')[0]) + float(err.split()[2].split(':')[1].split('e')[0].split('.')[1])
+                sum_e = sum_e + float(time_e)
+                ctr = ctr + 1
+            print data_size + " " + str(num_of_threads) + " " + str(sum_e/5)
+            num_of_threads *= 2
+            ctr = 0
+            sum_e = 0
+        num_of_threads = 2
+================================
+
+System Parameters:
+
+The results have been collected on
+Ubuntu(Lubuntu) 16.04 VM(Virtual Machine) on MacBook Pro Machine
+with specs : 2.7 GHz Intel Core i5, 8 GB 1867 MHz DDR3
+
+VMM: Oracle Virtual Box
+
+VM Specs:
+CPU Cores : 2
+Base Memory : 2048 MB
+Acceleration : VT-x/AMD-V, Nested Paging, KVM Paravirtualization
+
+================================
+Results: Output of Script (Format  <datasize> <no of threads> <time in
+seconds>) If you  are not interested in no's please  skip this section
+and checkout the .png files in source directory.
+//Line graphs
+pa1-petersons_1024.png
+pa1-petersons_1048576.png
+pa1-petersons_262144.png
+pa1-std_1024.png
+pa1-std_1048576.png
+pa1-std_262144.png
+pa1-bakery_1024.png
+TODO
+//Data corresponding to the line graphs
+//pa1-std
+1024 2 1.6
+1024 4 2.0
+1024 8 2.0
+1024 16 2.2
+1024 32 2.0
+1024 64 2.2
+1024 128 2.2
+262144 2 320.2
+262144 4 343.2
+262144 8 317.0
+262144 16 322.6
+262144 32 318.0
+262144 64 340.6
+262144 128 319.2
+1048576 2 1159.4
+1048576 4 1164.6
+1048576 8 1123.8
+1048576 16 1128.4
+1048576 32 1146.2
+1048576 64 1129.4
+1048576 128 1133.6
+//pa1-petersons
+1024 2 2.2
+1024 4 13.8
+1024 8 45.4
+1024 16 46.2
+1024 32 55.2
+1024 64 80.6
+1024 128 279.0
+262144 2 284.0
+262144 4 558.8
+262144 8 1119.8
+262144 16 2199.4
+262144 32 4404.8
+262144 64 8872.4
+262144 128 17850.6
+1048576 2 1100.6
+1048576 4 2182.4
+1048576 8 4370.2
+1048576 16 8711.6
+1048576 32 17443.0
+1048576 64 34705.4
+1048576 128 69771.8
+//pa1-bakery
+1024 2 2.0
+1024 4 41.0
+1024 8 84.2
+1024 16 107.4
+1024 32 209.4
+1024 64 471.6
+1024 128 1155.0
+262144 2 285.4
+262144 4 560.4
+262144 8 1113.0
+262144 16 2201.0
+262144 32 4365.6
+262144 64 8755.6
+TODO
+
+==================================================
+
+A10)
+On an average the pa1-std i.e the standard lock provided by C++ library
+performs the best. Yes there were situations for which this was not the best lock.
+If you look at the results above:
+For pa1-std
+<datasize> <no of threads> <time in seconds>
+262144           2             320.2
+For pa1-petersons
+<datasize> <no of threads> <time in seconds>
+262144           2             284.0
+For pa1-bakery
+<datasize> <no of threads> <time in seconds>
+262144           2             285.4
+
+For pa1-std
+<datasize> <no of threads> <time in seconds>
+1048576           2             1159.4
+For pa1-petersons
+<datasize> <no of threads> <time in seconds>
+1048576           2             1100.6
+For pa1-bakery
+<datasize> <no of threads> <time in seconds>
+1048576           2             TODO
+
+
+As you can see for these parameters bakery and petersons performed better than
+standard lock.
+
+
+A11)
+
+The relative performance of bakery and petersons differs with data size.
+For:
+1024 : Petersons is clear winner as the no of threads increase 
+262144 : Bakery and petersons more or less deliver the same perfomance.
+1048576 : TODO
+
+A13)
+
+
