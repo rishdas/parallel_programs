@@ -71,8 +71,15 @@ void PetersonsFilterLock::unlock(size_t tid) {
 }
 
 bool PetersonsFilterLock::try_lock(size_t tid) {
+    size_t me = tid;
+    for (size_t i = 1; i < num_threads; i++) {
+	level[me] = i;
+	victim[i] = me;
+	while (sameOrHigher(me, i) && victim[i] == me) {
+	    return false;
+	}
+    }
     return true;
-	// FIXME
 }
 
 bool PetersonsFilterLock::sameOrHigher(size_t me, size_t i) {
@@ -110,8 +117,15 @@ void BakeryLock::unlock(size_t tid) {
 }
 
 bool BakeryLock::try_lock(size_t tid) {
+    size_t i = tid;
+    flag[i] = true;
+    label[i] = maxLabel() + 1;
+    for (size_t k = 0; k < num_threads; k++) {
+	while (k != i && (flag[k] && isLabelLessThan(k, i))) {
+	    return false;
+	}
+    }
     return true;
-	// FIXME
 }
 
 size_t BakeryLock::maxLabel() {
