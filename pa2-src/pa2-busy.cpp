@@ -85,6 +85,7 @@ vector<uint32_t> data;
  * Functions
  */
 
+
 int main(int argc, char** argv) {
 	if (argc == 2 and strncmp("-h", argv[1], 2) == 0) {
 		cout << "Usage: " << argv[0] << " [num_threads] [num_rounds] [data_size]\n";
@@ -102,9 +103,14 @@ int main(int argc, char** argv) {
 	vector<thread> thread_v;
 	thread_v.reserve(num_threads);
 
+	//Instantiate lock
+
+	lock_t me_lock(num_threads);
+
+
 	// Spawn our threads.
 	for (size_t thread_id = num_threads; thread_id-- > 0;) {
-		thread_v.emplace_back(worker_fun, thread_id);
+	    thread_v.emplace_back(worker_fun, thread_id, ref<lock_t>(me_lock));
 	}
 
 	// Join our threads.
@@ -115,36 +121,45 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
-void worker_fun(size_t tid) {
-	tout(tid) << "Entering thread." << endl;
+void worker_fun(size_t tid, lock_t& data_lock) {
+    data_lock.lock(tid);
+    tout(tid) << "Entering thread." << endl;
+    data_lock.unlock(tid);
+	
+    // Initialize the pseudo-random number generator.
+    random_device rd;
+    default_random_engine entropy_engine(rd());
+    uniform_int_distribution<uint32_t> ui_dist(0, numeric_limits<uint32_t>::max());
 
-	// Initialize the pseudo-random number generator.
-	random_device rd;
-	default_random_engine entropy_engine(rd());
-	uniform_int_distribution<uint32_t> ui_dist(0, numeric_limits<uint32_t>::max());
+    while (true) {
+	// Initialize the 'hash' states.
+	uint32_t old_state = HASH_START_STATE,
+	    new_state = HASH_START_STATE;
 
-	while (round_num > 0) {
-		// Initialize the 'hash' states.
-		uint32_t old_state = HASH_START_STATE,
-		         new_state = HASH_START_STATE;
+	// Generate new data and hash as we go
+	data_lock.lock(tid);
+	if (round_num > 0) {
+	    for (size_t index = data_size; index-- > 0;) {
+		uint32_t new_val = ui_dist(entropy_engine);
 
-		// Generate new data and hash as we go
-		for (size_t index = data_size; index-- > 0;) {
-			uint32_t new_val = ui_dist(entropy_engine);
+		update_hash_state(old_state, data[index]);
+		update_hash_state(new_state, new_val);
 
-			update_hash_state(old_state, data[index]);
-			update_hash_state(new_state, new_val);
+		data[index] = new_val;
+	    }
 
-			data[index] = new_val;
-		}
+	    // Print result of hasing the old and new data.
+	    tout(tid) << "Old data hash: 0x" << hex << setfill('0') << setw(8) << old_state << endl;
+	    tout(tid) << "New data hash: 0x" << hex << setfill('0') << setw(8) << new_state << endl << endl;
 
-		// Print result of hasing the old and new data.
-		tout(tid) << "Old data hash: 0x" << hex << setfill('0') << setw(8) << old_state << endl;
-		tout(tid) << "New data hash: 0x" << hex << setfill('0') << setw(8) << new_state << endl << endl;
-
-		// Decrement the round count.
-		--round_num;
+	    // Decrement the round count.
+	    --round_num;
+	} else {
+	    data_lock.unlock(tid);
+	    break;
 	}
+	data_lock.unlock(tid);
+    }
 }
 
 void update_hash_state(uint32_t& state, uint32_t data_word) {

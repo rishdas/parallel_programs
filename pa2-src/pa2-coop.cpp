@@ -102,9 +102,13 @@ int main(int argc, char** argv) {
 	vector<thread> thread_v;
 	thread_v.reserve(num_threads);
 
+	//Instantiate lock
+
+	lock_t me_lock(num_threads);
+
 	// Spawn our threads.
 	for (size_t thread_id = num_threads; thread_id-- > 0;) {
-		thread_v.emplace_back(worker_fun, thread_id);
+	    thread_v.emplace_back(worker_fun, thread_id, ref<lock_t>(me_lock));
 	}
 
 	// Join our threads.
@@ -115,7 +119,7 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
-void worker_fun(size_t tid) {
+void worker_fun(size_t tid, lock_t& data_lock) {
 	tout(tid) << "Entering thread." << endl;
 
 	// Initialize the pseudo-random number generator.

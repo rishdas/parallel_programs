@@ -39,25 +39,34 @@ class StdWrapperLock {
 };
 
 class PetersonsFilterLock {
-	// FIXME: Add member variables here.
+private:
+    size_t *level;
+    size_t *victim;
+    size_t num_threads;
+    
+public:
+    PetersonsFilterLock(size_t num_threads);
 
-	public:
-	PetersonsFilterLock(size_t num_threads);
+    void lock(size_t tid);
+    void unlock(size_t tid);
+    bool try_lock(size_t tid);
+    bool sameOrHigher(size_t, size_t);
 
-	void lock(size_t tid);
-	void unlock(size_t tid);
-	bool try_lock(size_t tid);
 };
 
 class BakeryLock {
-	// FIXME: Add member variables here.
+private:
+    bool   *flag;
+    size_t *label;
+    size_t num_threads;
+public:
+    BakeryLock(size_t num_threads);
 
-	public:
-	BakeryLock(size_t num_threads);
-
-	void lock(size_t tid);
-	void unlock(size_t tid);
-	bool try_lock(size_t tid);
+    void lock(size_t tid);
+    void unlock(size_t tid);
+    bool try_lock(size_t tid);
+    size_t maxLabel();
+    bool   isLabelLessThan(size_t, size_t);
 };
 
 class CASLock {
