@@ -92,14 +92,14 @@ public:
 };
 
 class TTASLock {
-	// FIXME: Add member variables here.
+    int state;
 
-	public:
-	TTASLock(size_t num_threads);
+public:
+    TTASLock(size_t num_threads);
 
-	void lock(size_t tid);
-	void unlock(size_t tid);
-	bool try_lock(size_t tid);
+    void lock(size_t tid);
+    void unlock(size_t tid);
+    bool try_lock(size_t tid);
 };
 
 class BackoffLock {

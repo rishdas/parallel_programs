@@ -192,20 +192,27 @@ bool TASLock::try_lock(size_t tid) {
 // Test-and-Test-And-Set Lock
 
 TTASLock::TTASLock(size_t num_threads) {
-	// FIXME
+    state = 0;
 }
 
 void TTASLock::lock(size_t tid) {
-	// FIXME
+    while(true) {
+	while(state != 0);
+	if (test_and_set<int>(&state) == 0) {
+	    return;
+	}
+    }
 }
 
 void TTASLock::unlock(size_t tid) {
-	// FIXME
+    unset<int>(&state);
 }
 
 bool TTASLock::try_lock(size_t tid) {
-    return true;
-	// FIXME
+    if (state == 1) {
+	return false;
+    }
+    return (test_and_set<int>(&state) == 0);
 }
 
 // Backoff Lock
