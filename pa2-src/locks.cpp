@@ -150,39 +150,43 @@ bool BakeryLock::isLabelLessThan(size_t k, size_t i) {
 // Compare-And-Swap Lock
 
 CASLock::CASLock(size_t num_threads) {
-	// FIXME
+    state = 0;
 }
 
 void CASLock::lock(size_t tid) {
-	// FIXME
+    while(!(compare_and_swap(&state, 0, 1) == 0));
 }
 
 void CASLock::unlock(size_t tid) {
-	// FIXME
+    state = 0;
 }
 
 bool CASLock::try_lock(size_t tid) {
-    return true;
-	// FIXME
+    if(compare_and_swap(&state, 0, 1) == 0) {
+    	return true;
+    }
+    return false;
 }
 
 // Test-And-Set Lock
 
 TASLock::TASLock(size_t num_threads) {
-	// FIXME
+    state = 0;
 }
 
 void TASLock::lock(size_t tid) {
-	// FIXME
+    while(test_and_set<int>(&state));
 }
 
 void TASLock::unlock(size_t tid) {
-	// FIXME
+    unset<int>(&state);
 }
 
 bool TASLock::try_lock(size_t tid) {
+    if (test_and_set<int>(&state)) {
+	return false;
+    }
     return true;
-	// FIXME
 }
 
 // Test-and-Test-And-Set Lock

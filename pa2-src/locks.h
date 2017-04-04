@@ -70,25 +70,25 @@ public:
 };
 
 class CASLock {
-	// FIXME: Add member variables here.
+    int state;
 
-	public:
-	CASLock(size_t num_threads);
+public:
+    CASLock(size_t num_threads);
 
-	void lock(size_t tid);
-	void unlock(size_t tid);
-	bool try_lock(size_t tid);
+    void lock(size_t tid);
+    void unlock(size_t tid);
+    bool try_lock(size_t tid);
 };
 
 class TASLock {
-	// FIXME: Add member variables here.
+    int state;
 
-	public:
-	TASLock(size_t num_threads);
+public:
+    TASLock(size_t num_threads);
 
-	void lock(size_t tid);
-	void unlock(size_t tid);
-	bool try_lock(size_t tid);
+    void lock(size_t tid);
+    void unlock(size_t tid);
+    bool try_lock(size_t tid);
 };
 
 class TTASLock {
