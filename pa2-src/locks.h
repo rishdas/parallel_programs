@@ -19,6 +19,16 @@
 #include <cstddef>
 #include <mutex>
 
+#include <thread>
+#include <chrono>
+#include <cstdlib>
+#include <ctime>
+
+#define MIN_DELAY 1
+#define MAX_DELAY 5
+
+using namespace std;
+
 struct DummyLock {
 	DummyLock(size_t num_threads);
 
@@ -102,15 +112,25 @@ public:
     bool try_lock(size_t tid);
 };
 
+class Backoff {
+    int minDelay, maxDelay;
+    int       delay;
+public:
+    Backoff(int min, int max);
+
+    void doBackoff();
+};
+
 class BackoffLock {
-	// FIXME: Add member variables here.
+    int state;
+    int isFirstTry;
 
-	public:
-	BackoffLock(size_t num_threads);
+public:
+    BackoffLock(size_t num_threads);
 
-	void lock(size_t tid);
-	void unlock(size_t tid);
-	bool try_lock(size_t tid);
+    void lock(size_t tid);
+    void unlock(size_t tid);
+    bool try_lock(size_t tid);
 };
 
 class MCSLock {

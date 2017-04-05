@@ -19,6 +19,7 @@
 #include "locks.h"
 #include "pa2_atomics.h"
 
+
 /*
  * Functions
  */
@@ -218,22 +219,52 @@ bool TTASLock::try_lock(size_t tid) {
 // Backoff Lock
 
 BackoffLock::BackoffLock(size_t num_threads) {
-	// FIXME
+    state = 0;
+    isFirstTry = true;
 }
 
 void BackoffLock::lock(size_t tid) {
-	// FIXME
+    Backoff backoff(MIN_DELAY, MAX_DELAY);
+    while(true) {
+	while(state != 0);
+	if (test_and_set<int>(&state) == 0) {
+	    return;
+	} else {
+	    backoff.doBackoff();
+	}
+    }
 }
 
 void BackoffLock::unlock(size_t tid) {
-	// FIXME
+    unset<int>(&state);
 }
 
 bool BackoffLock::try_lock(size_t tid) {
-    return true;
-	// FIXME
+    Backoff backoff(MIN_DELAY, MAX_DELAY);
+    if (state == 1) {
+	return false;
+    }
+    if (test_and_set<int>(&state) == 0) {	
+	return true;
+    } else if (isFirstTry == false) {
+	return false;
+    } else {
+	isFirstTry = false;
+	backoff.doBackoff();
+	return this->try_lock(tid);
+    }
 }
 
+Backoff::Backoff(int min, int max) {
+    minDelay = min;
+    maxDelay = max;
+    srand(time(NULL));
+    delay = minDelay + rand()%(maxDelay-minDelay);
+}
+void Backoff::doBackoff() {
+    this_thread::sleep_for(chrono::seconds(delay));
+    delay = minDelay + rand()%(maxDelay-minDelay);
+}
 // MCS Lock
 
 MCSLock::MCSLock(size_t num_threads) {
