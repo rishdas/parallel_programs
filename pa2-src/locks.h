@@ -133,15 +133,25 @@ public:
     bool try_lock(size_t tid);
 };
 
+class QNode {
+public:
+    bool  locked;
+    QNode *next;
+    
+    QNode();
+    
+};
+    
 class MCSLock {
-	// FIXME: Add member variables here.
+    /* QNode                     *tail; */
+    /* thread_local static QNode *myNode; */
 
-	public:
-	MCSLock(size_t num_threads);
+public:
+    MCSLock(size_t num_threads);
 
-	void lock(size_t tid);
-	void unlock(size_t tid);
-	bool try_lock(size_t tid);
+    void lock(size_t tid);
+    void unlock(size_t tid);
+    bool try_lock(size_t tid);
 };
 
 #endif

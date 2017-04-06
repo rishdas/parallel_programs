@@ -29,6 +29,9 @@
 DummyLock::DummyLock(size_t num_threads) {}
 void DummyLock::lock(size_t tid)   {}
 void DummyLock::unlock(size_t tid) {}
+bool DummyLock::try_lock(size_t tid) {
+    return true;
+}
 
 // Standard Wrapper Lock
 
@@ -268,18 +271,41 @@ void Backoff::doBackoff() {
 // MCS Lock
 
 MCSLock::MCSLock(size_t num_threads) {
-	// FIXME
+    // tail = NULL;
+    // myNode = NULL;
 }
 
 void MCSLock::lock(size_t tid) {
-	// FIXME
+    // QNode *qnode = myNode;
+    // QNode *pred = __sync_val_compare_and_swap(&tail, tail, qnode);
+
+    // if (pred != NULL) {
+    // 	qnode->locked = true;
+    // 	pred->next = qnode;
+
+    // 	while(qnode->locked);
+    // }
 }
 
 void MCSLock::unlock(size_t tid) {
-	// FIXME
+    // QNode *qnode = myNode;
+
+    // if (qnode->next == NULL) {
+    // 	if (__sync_bool_compare_and_swap(&tail, qnode, NULL)) {
+    // 	    return;
+    // 	}
+    // 	while (qnode->next == NULL);
+    // }
+    // qnode->next->locked = false;
+    // qnode->next = NULL;
 }
 
 bool MCSLock::try_lock(size_t tid) {
     return true;
 	// FIXME
+}
+
+QNode::QNode() {
+    locked = false;
+    next = NULL;
 }

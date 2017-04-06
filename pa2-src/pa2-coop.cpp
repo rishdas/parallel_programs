@@ -86,88 +86,101 @@ vector<uint32_t> data;
  */
 
 int main(int argc, char** argv) {
-	if (argc == 2 and strncmp("-h", argv[1], 2) == 0) {
-		cout << "Usage: " << argv[0] << " [num_threads] [num_rounds] [data_size]\n";
-		exit(0);
-	}
+    if (argc == 2 and strncmp("-h", argv[1], 2) == 0) {
+	cout << "Usage: " << argv[0] << " [num_threads] [num_rounds] [data_size]\n";
+	exit(0);
+    }
 
-	num_threads = argc >= 2 ? atoi(argv[1]) :               4;
-	round_num   = argc >= 3 ? atoi(argv[2]) : num_threads * 4;
-	data_size   = argc >= 4 ? atoi(argv[3]) :            1024;
+    num_threads = argc >= 2 ? atoi(argv[1]) :               4;
+    round_num   = argc >= 3 ? atoi(argv[2]) : num_threads * 4;
+    data_size   = argc >= 4 ? atoi(argv[3]) :            1024;
 
-	// Allocate data buffer.
-	data.resize(data_size);
+    // Allocate data buffer.
+    data.resize(data_size);
 
-	// Reserve space for our vector of thread objects.
-	vector<thread> thread_v;
-	thread_v.reserve(num_threads);
+    // Reserve space for our vector of thread objects.
+    vector<thread> thread_v;
+    thread_v.reserve(num_threads);
 
-	//Instantiate lock
+    //Instantiate lock
 
-	lock_t me_lock(num_threads);
+    lock_t me_lock(num_threads);
 
-	// Spawn our threads.
-	for (size_t thread_id = num_threads; thread_id-- > 0;) {
-	    thread_v.emplace_back(worker_fun, thread_id, ref<lock_t>(me_lock));
-	}
+    // Spawn our threads.
+    for (size_t thread_id = num_threads; thread_id-- > 0;) {
+	thread_v.emplace_back(worker_fun, thread_id, ref<lock_t>(me_lock));
+    }
 
-	// Join our threads.
-	for (thread& t : thread_v) {
-		t.join();
-	}
+    // Join our threads.
+    for (thread& t : thread_v) {
+	t.join();
+    }
 
-	return 0;
+    return 0;
 }
 
 void worker_fun(size_t tid, lock_t& data_lock) {
-	tout(tid) << "Entering thread." << endl;
+    while(!data_lock.try_lock(tid)) {
+	this_thread::yield();
+    }
+    tout(tid) << "Entering thread." << endl;
+    data_lock.unlock(tid);
 
-	// Initialize the pseudo-random number generator.
-	random_device rd;
-	default_random_engine entropy_engine(rd());
-	uniform_int_distribution<uint32_t> ui_dist(0, numeric_limits<uint32_t>::max());
+    // Initialize the pseudo-random number generator.
+    random_device rd;
+    default_random_engine entropy_engine(rd());
+    uniform_int_distribution<uint32_t> ui_dist(0, numeric_limits<uint32_t>::max());
 
-	while (round_num > 0) {
-		// Initialize the 'hash' states.
-		uint32_t old_state = HASH_START_STATE,
-		         new_state = HASH_START_STATE;
+    while (true) {
+	// Initialize the 'hash' states.
+	uint32_t old_state = HASH_START_STATE,
+	    new_state = HASH_START_STATE;
 
-		// Generate new data and hash as we go
-		for (size_t index = data_size; index-- > 0;) {
-			uint32_t new_val = ui_dist(entropy_engine);
-
-			update_hash_state(old_state, data[index]);
-			update_hash_state(new_state, new_val);
-
-			data[index] = new_val;
-		}
-
-		// Print result of hasing the old and new data.
-		tout(tid) << "Old data hash: 0x" << hex << setfill('0') << setw(8) << old_state << endl;
-		tout(tid) << "New data hash: 0x" << hex << setfill('0') << setw(8) << new_state << endl << endl;
-
-		// Decrement the round count.
-		--round_num;
+	// Generate new data and hash as we go
+	while(!data_lock.try_lock(tid)) {
+	    this_thread::yield();
 	}
+	if (round_num > 0) {
+	    for (size_t index = data_size; index-- > 0;) {
+		uint32_t new_val = ui_dist(entropy_engine);
+
+		update_hash_state(old_state, data[index]);
+		update_hash_state(new_state, new_val);
+
+		data[index] = new_val;
+	    }
+
+	    // Print result of hasing the old and new data.
+	    tout(tid) << "Old data hash: 0x" << hex << setfill('0') << setw(8) << old_state << endl;
+	    tout(tid) << "New data hash: 0x" << hex << setfill('0') << setw(8) << new_state << endl << endl;
+
+	    // Decrement the round count.
+	    --round_num;
+	} else {
+	    data_lock.unlock(tid);
+	    break;
+	}
+	data_lock.unlock(tid);
+    }
 }
 
 void update_hash_state(uint32_t& state, uint32_t data_word) {
-	state ^= data_word;
+    state ^= data_word;
 
-	switch (state % 3) {
-	case 0:
-		state *= HASH_MAGIC0;
-		break;
-	case 1:
-		state = (state << 8) | (state >> 24);
-		break;
-	case 2:
-		uint8_t rot_size = data_word % 32;
-		state ^= (state << rot_size) | (state >> (32 - rot_size));
-		break;
-	}
+    switch (state % 3) {
+    case 0:
+	state *= HASH_MAGIC0;
+	break;
+    case 1:
+	state = (state << 8) | (state >> 24);
+	break;
+    case 2:
+	uint8_t rot_size = data_word % 32;
+	state ^= (state << rot_size) | (state >> (32 - rot_size));
+	break;
+    }
 }
 
 basic_ostream<char>& tout(size_t tid) {
-	return (cout << "[Thread " << dec << tid << "]: ");
+    return (cout << "[Thread " << dec << tid << "]: ");
 }
