@@ -16,10 +16,17 @@
 
 // Local Includes
 
+#include <iostream>
+
 #include "locks.h"
 #include "pa2_atomics.h"
 
+/*
+ * Static Variables
+ */
 
+thread_local QNode* MCSLock::myNode;
+using namespace std;
 /*
  * Functions
  */
@@ -271,38 +278,39 @@ void Backoff::doBackoff() {
 // MCS Lock
 
 MCSLock::MCSLock(size_t num_threads) {
-    // tail = NULL;
-    // myNode = NULL;
+    tail = NULL;
+    myNode = NULL;
 }
 
 void MCSLock::lock(size_t tid) {
-    // QNode *qnode = myNode;
-    // QNode *pred = __sync_val_compare_and_swap(&tail, tail, qnode);
+    if (myNode == NULL) {
+	myNode = new QNode();
+    }
+    QNode *qnode = myNode;
+    QNode *pred = tail.exchange(qnode, memory_order_seq_cst);
 
-    // if (pred != NULL) {
-    // 	qnode->locked = true;
-    // 	pred->next = qnode;
+    if (pred != NULL) {
+    	qnode->locked = true;
+    	pred->next = qnode;
 
-    // 	while(qnode->locked);
-    // }
+    	while(qnode->locked);
+    }
 }
 
 void MCSLock::unlock(size_t tid) {
-    // QNode *qnode = myNode;
-
-    // if (qnode->next == NULL) {
-    // 	if (__sync_bool_compare_and_swap(&tail, qnode, NULL)) {
-    // 	    return;
-    // 	}
-    // 	while (qnode->next == NULL);
-    // }
-    // qnode->next->locked = false;
-    // qnode->next = NULL;
+    QNode *qnode = myNode;
+    if (qnode->next == NULL) {
+    	if (tail.compare_exchange_strong(qnode, NULL, memory_order_seq_cst)) {
+    	    return;
+    	}
+    	while (qnode->next == NULL);
+    }
+    qnode->next->locked = false;
+    qnode->next = NULL;
 }
 
 bool MCSLock::try_lock(size_t tid) {
     return true;
-	// FIXME
 }
 
 QNode::QNode() {

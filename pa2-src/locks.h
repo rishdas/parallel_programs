@@ -23,6 +23,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <ctime>
+#include <atomic>
 
 #define MIN_DELAY 1
 #define MAX_DELAY 5
@@ -143,8 +144,8 @@ public:
 };
     
 class MCSLock {
-    /* QNode                     *tail; */
-    /* thread_local static QNode *myNode; */
+    atomic<QNode*> tail;
+    thread_local static QNode* myNode;
 
 public:
     MCSLock(size_t num_threads);

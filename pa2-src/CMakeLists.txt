@@ -106,7 +106,7 @@ add_executable(pa2-busy-backoff pa2-busy.cpp locks.cpp)
 target_compile_definitions(pa2-busy-backoff PRIVATE PA2_BACKOFF_LOCK)
 
 add_executable(pa2-busy-mcs pa2-busy.cpp locks.cpp)
-target_compile_definitions(pa2-busy-bakery PRIVATE PA2_MCS_LOCK)
+target_compile_definitions(pa2-busy-mcs PRIVATE PA2_MCS_LOCK)
 
 # Cooperatively scheduled versions
 
@@ -135,7 +135,7 @@ add_executable(pa2-coop-backoff pa2-coop.cpp locks.cpp)
 target_compile_definitions(pa2-coop-backoff PRIVATE PA2_BACKOFF_LOCK)
 
 add_executable(pa2-coop-mcs pa2-coop.cpp locks.cpp)
-target_compile_definitions(pa2-coop-bakery PRIVATE PA2_MCS_LOCK)
+target_compile_definitions(pa2-coop-mcs PRIVATE PA2_MCS_LOCK)
 
 #########################
 # Utility Build Targets #
