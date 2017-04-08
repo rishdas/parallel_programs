@@ -310,7 +310,18 @@ void MCSLock::unlock(size_t tid) {
 }
 
 bool MCSLock::try_lock(size_t tid) {
+    if (myNode == NULL) {
+	myNode = new QNode();
+    }
+    QNode *qnode = myNode;
+    QNode *pred = tail.exchange(qnode, memory_order_seq_cst);
+
+    if (pred != NULL) {
+	tail.compare_exchange_strong(pred, qnode, memory_order_seq_cst);
+	return false;
+    }
     return true;
+	
 }
 
 QNode::QNode() {
