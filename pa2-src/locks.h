@@ -144,7 +144,7 @@ public:
 };
     
 class MCSLock {
-    atomic<QNode*> tail;
+    QNode* tail;
     thread_local static QNode* myNode;
 
 public:

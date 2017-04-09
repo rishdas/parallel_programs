@@ -287,7 +287,7 @@ void MCSLock::lock(size_t tid) {
 	myNode = new QNode();
     }
     QNode *qnode = myNode;
-    QNode *pred = tail.exchange(qnode, memory_order_seq_cst);
+    QNode *pred = __sync_lock_test_and_set(&tail, qnode);
 
     if (pred != NULL) {
     	qnode->locked = true;
@@ -300,7 +300,7 @@ void MCSLock::lock(size_t tid) {
 void MCSLock::unlock(size_t tid) {
     QNode *qnode = myNode;
     if (qnode->next == NULL) {
-    	if (tail.compare_exchange_strong(qnode, NULL, memory_order_seq_cst)) {
+    	if (__sync_bool_compare_and_swap(&tail, qnode, nullptr)) {
     	    return;
     	}
     	while (qnode->next == NULL);
@@ -310,18 +310,18 @@ void MCSLock::unlock(size_t tid) {
 }
 
 bool MCSLock::try_lock(size_t tid) {
+
     if (myNode == NULL) {
 	myNode = new QNode();
     }
     QNode *qnode = myNode;
-    QNode *pred = tail.exchange(qnode, memory_order_seq_cst);
 
-    if (pred != NULL) {
-	tail.compare_exchange_strong(pred, qnode, memory_order_seq_cst);
-	return false;
+    if (tail == NULL) {
+	if (__sync_bool_compare_and_swap(&tail, NULL, qnode)) {
+    	    return true;
+    	}
     }
-    return true;
-	
+    return false;	
 }
 
 QNode::QNode() {
