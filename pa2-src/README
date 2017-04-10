@@ -1,0 +1,22 @@
+The answers to the questions are in the respective code files
+All graphs in form of bar chart present in following image files
+$ ls -l *.png
+-rw-r--r--@ 1 rishigodfather  staff  101231 Apr  9 20:53 1024-best-3.png
+-rw-r--r--@ 1 rishigodfather  staff  113598 Apr  9 21:18 1048576-best-3.png
+-rw-r--r--@ 1 rishigodfather  staff  113396 Apr  9 21:04 262144-best-3.png
+-rw-------@ 1 rishigodfather  staff  135918 Apr  9 19:17 busy-1024.png
+-rw-------@ 1 rishigodfather  staff  106255 Apr  9 19:17 busy-1048576.png
+-rw-------@ 1 rishigodfather  staff  163864 Apr  9 19:17 busy-262144.png
+-rw-r--r--@ 1 rishigodfather  staff   92268 Apr  9 20:21 coop-1024.png
+-rw-r--r--@ 1 rishigodfather  staff  110052 Apr  9 20:21 coop-1048576.png
+-rw-r--r--@ 1 rishigodfather  staff   91265 Apr  9 20:21 coop-262144.png
+
+Data collected for refference:
+
+$ ls -l *.dat
+-rw-r--r--  1 rishigodfather  staff  5388 Apr  9 21:22 pa2.dat
+
+Script used to collect data:
+
+$ ls -l *.py
+-rw-r--r--  1 rishigodfather  staff  1291 Apr  8 18:51 pa2-performance.py

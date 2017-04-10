@@ -248,7 +248,7 @@ void BackoffLock::lock(size_t tid) {
 void BackoffLock::unlock(size_t tid) {
     unset<int>(&state);
 }
-
+//Back off once if lock available initially and TAS fails and then return false
 bool BackoffLock::try_lock(size_t tid) {
     Backoff backoff(MIN_DELAY, MAX_DELAY);
     if (state == 1) {
