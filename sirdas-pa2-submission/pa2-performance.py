@@ -5,7 +5,8 @@ sum_e = 0
 num_of_rounds = '100'
 num_of_threads = 2
 data_sizes = ['1024', '262144', '1048576']
-binary_l = ['./pa2-busy-backoff', './pa2-busy-cas', './pa2-busy-mcs', './pa2-busy-tas', './pa2-busy-ttas', './pa2-coop-backoff', './pa2-coop-bakery', './pa2-coop-cas', './pa2-coop-tas', './pa2-coop-ttas']
+binary_l = ['./pa2-busy-std', './pa2-busy-petersons', './pa2-busy-bakery', './pa2-busy-backoff', './pa2-busy-cas', './pa2-busy-tas', './pa2-busy-ttas', './pa2-busy-mcs', './pa2-coop-std', './pa2-coop-petersons', './pa2-coop-bakery', './pa2-coop-backoff', './pa2-coop-cas', './pa2-coop-tas', './pa2-coop-ttas', './pa2-coop-mcs']
+#binary_l = ['./pa2-busy-std']
 ctr = 0
 for binary in binary_l:
     print binary
