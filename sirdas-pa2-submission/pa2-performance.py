@@ -16,6 +16,7 @@ for binary in binary_l:
                 p = Popen(['time', binary, str(num_of_threads), num_of_rounds, data_size], stdin=PIPE, stdout=PIPE, stderr=PIPE)
                 out, err = p.communicate()
                 exitcode = p.returncode
+                print err
                 if ctr == 0:
                     ctr = ctr + 1
                     continue
